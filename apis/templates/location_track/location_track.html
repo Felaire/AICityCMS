@@ -27,7 +27,7 @@
         <div id='timeTrackList' style="display: none;">
             <ul id="timeUl">
                 {% for time_info in device_track %}
-                <li onclick="chooseTime(this.innerText)">{{time_info.captured_time}}</li>
+                <li onclick="chooseTime(this.innerText)" style="cursor: pointer;">{{time_info.captured_time}}</li>
                 {% endfor %}
             </ul>
         </div>
