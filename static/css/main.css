@@ -1,0 +1,97 @@
+#menu {
+    background: #fff;
+    position: absolute;
+    z-index: 1;
+    top: 550px;
+    right: 80px;
+    border-radius: 3px;
+    width: 60px;
+    border: 1px solid rgba(0,0,0,0.4);
+    font-family: 'Open Sans', sans-serif;
+}
+ 
+#menu a {
+    font-size: 13px;
+    color: #404040;
+    display: block;
+    margin: 0;
+    padding: 0;
+    padding: 10px;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,0,0,0.25);
+    text-align: center;
+}
+ 
+#menu a:last-child {
+    border: none;
+}
+ 
+#menu a:hover {
+    background-color: #f8f8f8;
+    color: #404040;
+}
+ 
+#menu a.active {
+    background-color: #3887be;
+    color: #ffffff;
+}
+ 
+#menu a.active:hover {
+    background: #3074a4;
+}
+
+#info {
+    display: block;
+    position: relative;
+    margin: 0px auto;
+    width: 50%;
+    padding: 10px;
+    border: none;
+    border-radius: 3px;
+    font-size: 12px;
+    text-align: center;
+    color: #222;
+    background: #fff;
+}
+
+#layers {
+    margin-top: 400px;
+    float: right;
+    left: 0px;
+    text-align: left;
+    font-size: 20px;
+}
+
+label{
+    line-height: 20px;
+    display: inline-block;
+    margin-left: 5px;
+    margin-right:15px;
+    color: black;
+}
+
+.properties {
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    position: absolute;
+    bottom: 40px;
+    left: 10px;
+    padding:5px 10px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 18px;
+    border-radius: 3px;
+    text-align: left;
+    display: none;
+    }
+
+#userManage {
+	position: relative;
+}
+
+#timeSelect {
+	position: relative;
+	top: 50px;
+	left: 50px;
+	z-index: 2;
+}

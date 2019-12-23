@@ -1,0 +1,292 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />  
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />  
+        <title>Poi Map</title>
+        <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.js'></script>
+        <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css' rel='stylesheet' />
+        <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+        <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}"/>
+        <style>
+            body { margin:0; padding:0; text-align: center;}
+            #map { position:absolute; top:0; bottom:0; width:100%; z-index: -1;}
+        </style>
+    </head>
+    <body>
+        <div><input type="button" name="Submit" onclick="javascript:history.back(-1);" value="返回" /></div><br />
+        <div id='layers' onclick="layerControl()">
+            <div><input class='radio_type' id='base_map' type='checkbox' value='floor_plan' checked='checked'>
+            <label for='base_map'>BaseMap</label></div>
+    
+            <div><input class='radio_type'  id='beacon' type='checkbox' value='beacon'>
+            <label for='beacon'>iBeacon</label></div>
+    
+            <div><input class='radio_type'  id='pois' type='checkbox' value='pois'>
+            <label for='pois'>POI</label></div>
+        </div>
+        <div id='map'></div>
+        <nav id="menu"></nav>
+        <pre id='properties' class='properties'></pre>
+        <script>
+            //楼层
+            var layerList = document.getElementById('layers');
+            var choose_layer = layerList.getElementsByTagName('input');
+            // 创建地图
+        	mapboxgl.accessToken = 'pk.eyJ1IjoiZmVsYXJpZSIsImEiOiJjazJ4Z2wybG0wOWJxM21xcmJsNDZzcnp3In0.ZrLvRZJByBXfvWW8OPOq8w';
+	        var map = new mapboxgl.Map({
+	            container: 'map',
+	            style: 'mapbox://styles/mapbox/streets-v11', 
+	            center: [118.91105829179,32.11701001102], 
+	            zoom: 18
+            });
+            
+            // 添加POI
+            floors = []
+            pois_featureList = {}
+            {% for poi in pois %}
+                var exist_floor = false
+                for (var i=0; i<floors.length; i++) {
+                    if ("{{poi.level_code}}" == floors[i]) {
+                        exist_floor = true
+                        break
+                    }
+                }
+                if (exist_floor == false) {
+                    floors.push("{{poi.level_code}}")
+                    pois_feature = []
+                    pois_featureList["{{poi.level_code}}"] = pois_feature
+                }
+                else {
+                    pois_feature = pois_featureList["{{poi.level_code}}"]
+                }
+                // 添加POI Feature
+                this_feature = {}
+                this_feature["type"] = "Featrue",
+                this_feature["geometry"] = {
+                        "type": "Point",
+                        "coordinates": [{{poi.longitude}}, {{poi.latitude}}]
+                }
+                this_feature["properties"] = {"id": "{{poi.id}}", "name": "{{poi.name}}"}
+                pois_feature.push(this_feature)
+            {% endfor %}
+
+            // 添加beacon
+            beacons_featureList = {}
+            for (var i=0; i<floors.length; i++) {
+                beacons_featureList[floors[i]] = []
+            }
+            {% for beacon in beacons %}
+                beacons_feature = beacons_featureList["{{beacon.level_code}}"]
+                // 添加beacon Feature
+                this_feature = {}
+                this_feature["type"] = "Featrue",
+                this_feature["geometry"] = {
+                        "type": "Point",
+                        "coordinates": [{{beacon.longitude}}, {{beacon.latitude}}]
+                }
+                this_feature["properties"] = {"id": "{{beacon.id}}", "type": "{{beacon.beacon_type}}"}
+                beacons_feature.push(this_feature)
+            {% endfor %}
+
+            floorPlan_url = ["{% static 'imgs/floorplan_100.png' %}","{% static 'imgs/floorplan_103.png' %}","{% static 'imgs/floorplan_104.png' %}"]
+
+            // poi图层 默认显示一楼
+            var poi_layer = {
+                "id": "pois",
+                "type": "symbol",
+                "source": {
+                    "type": "geojson",
+                    "data": {
+                        "type": "FeatureCollection",
+                        "features": pois_featureList["100"]
+                    }
+                },
+                "layout": {
+                    "icon-image": "poi_marker",
+                    "text-field": "{name}",
+                    "text-offset": [0, 1],
+                    "text-anchor": "top"
+                }
+            }
+
+            // beacon图层 默认显示一楼
+            var beacon_layer = {
+                "id": "beacons",
+                "type": "circle",
+                "source": {
+                    "type": "geojson",
+                    "data": {
+                        "type": "FeatureCollection",
+                        "features": beacons_featureList["100"]
+                    }
+                },
+                "paint": {
+			        "circle-color": "#3887be",
+			        "circle-radius": 5
+		        }
+            }
+
+            //底图图层 默认显示一楼
+            var floorPlan_layer = {
+			    "id": "floorPlan",
+			    "type": "raster",
+			    "source": {
+			    	"type": "image",
+			    	"url": floorPlan_url[0],
+			    	"coordinates":[
+			    		[118.910553712999994,32.117351709800001],
+			    		[118.911630181000002,32.117351709800001],
+			    		[118.911630181000002,32.116736381200002],
+			    		[118.910553712999994,32.116736381200002]
+			    	]
+			    }
+            }
+
+            // marker图标
+            var images = {
+                'poi_marker': '{% static 'imgs/poi_marker.png' %}',
+            };
+
+            loadImages(images, function(loadedImages) {
+                map.on('load', function () {
+                    map.addImage('poi_marker', loadedImages['poi_marker'], {
+                        stretchX: [
+                            [25, 55],
+                            [85, 115]
+                        ],
+                        stretchY: [[25, 100]],
+                        content: [25, 25, 25, 25],
+                        pixelRatio: 6
+                    });
+                    //添加显示图层
+                    map.addLayer(poi_layer)
+                    map.addLayer(beacon_layer)
+                    map.addLayer(floorPlan_layer)
+                    //默认不显示
+                    map.setLayoutProperty("pois", 'visibility', 'none');
+                    map.setLayoutProperty("beacons", 'visibility', 'none');
+                    map.setLayoutProperty("floorPlan", 'visibility', 'none');
+
+                    //图层点击事件
+                    map.on('click', "pois", function (e) {
+                        show_properties("pois", e)
+                    })
+                    map.on('click', "beacons", function (e) {
+                        show_properties("beacons", e)
+                    })
+
+                    var toggleableLayerIds = floors;
+                    for (var i = 0; i < toggleableLayerIds.length; i++) {
+			        var id = toggleableLayerIds[i];
+			        var link = document.createElement('a');
+			        link.href = '#';
+			        link.className = 'active';
+			        link.textContent = id;
+			        link.onclick = function (e) {
+                        for (var i=0; i<floors.length; i++) {
+                            if(this.textContent == floors[i]) {                                
+                                if (choose_layer[0].checked == true) {
+                                    map.setLayoutProperty("floorPlan", 'visibility', 'visible');
+                                    if (i!=0) {
+                                        this_floorPlan = {"url":floorPlan_url[i-1]}
+                                        map.getSource("floorPlan").updateImage(this_floorPlan)
+                                    }
+                                }
+                                if (choose_layer[1].checked == true) {
+                                    map.setLayoutProperty("beacons", 'visibility', 'visible');
+                                    map.getSource('beacons').setData({
+                                        "type": "FeatureCollection",
+                                        "features": beacons_featureList[floors[i]]
+                                    })                                    
+                                }
+                                if (choose_layer[2].checked == true) {
+                                    map.setLayoutProperty("pois", 'visibility', 'visible');
+                                    map.getSource('pois').setData({
+                                        "type": "FeatureCollection",
+                                        "features": pois_featureList[floors[i]]
+                                    })                                    
+                                }
+                            }
+                        }
+			        	e.preventDefault();
+			        	e.stopPropagation();
+			        };
+			        var layers = document.getElementById('menu');
+			        layers.appendChild(link);
+                    }
+                })
+            })
+
+            // 图层选择
+            function layerControl() {
+		        if (choose_layer[0].checked == false) {
+                    map.setLayoutProperty("floorPlan", 'visibility', 'none');
+		        } else {
+                    map.setLayoutProperty("floorPlan", 'visibility', 'visible');
+                }
+		        if (choose_layer[1].checked == false) {
+                    map.setLayoutProperty("beacons", 'visibility', 'none');
+		        }
+                else {
+                    map.setLayoutProperty("beacons", 'visibility', 'visible');
+                }
+		        if (choose_layer[2].checked == false) {
+                    map.setLayoutProperty("pois", 'visibility', 'none');
+		        }
+                else {
+                    map.setLayoutProperty("pois", 'visibility', 'visible');
+                }
+	        }
+
+            // 详细属性信息显示
+            function show_properties(layer_id, e) {      
+                properties.style.display = 'block';      
+				var coordinates = e.features[0].geometry.coordinates.slice();
+				while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+					coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+                this_id = e.features[0].properties.id
+                if (layer_id == "pois") {
+                    eUrl = "http://127.0.0.1:8000/apis/poi_search"
+                }
+                if (layer_id == "beacons") {
+                    eUrl = "http://127.0.0.1:8000/apis/beacon_search"
+                }
+                $.ajax({
+                    url : eUrl,
+                    method: 'POST',
+                    data: {"id":this_id},
+                    dataType:'json',
+                    success:function(data){
+                        jsonStandard = JSON.stringify(data[layer_id]).slice(2,-2)
+                        jsonStandard = jsonStandard.replace(/\"/g, '')
+                        properties.innerHTML = jsonStandard.replace(/,/g, '\n')
+                    },
+                    error:function(e){
+                        console.log("error")
+                    }
+                });
+            }
+            
+            // 图片加载
+            function loadImages(urls, callback) {
+                var results = {};
+                for (var name in urls) {
+                    map.loadImage(urls[name], makeCallback(name));
+                }
+
+                function makeCallback(name) {
+                    return function(err, image) {
+                    results[name] = err ? null : image;
+                        // if all images are loaded, call the callback
+                        if (Object.keys(results).length === Object.keys(urls).length) {
+                        callback(results);
+                        }
+                    };
+                }
+            }
+        </script>
+    </body>
+</html>

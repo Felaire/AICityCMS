@@ -1,0 +1,320 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />  
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />  
+        <title>User Heatmap</title>
+        <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.js'></script>
+        <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css' rel='stylesheet' />
+        <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+        <style>
+            body { margin:0; padding:0; text-align: center;}
+            #map { position:absolute; top:0; bottom:0; width:100%; z-index: 0;}
+            #timeTrackList {position: relative;float:right; right:20px;width:250px; display:block; overflow-y: scroll; ;height:500px;background-color: rgba(255,255,255,0.3);border: 1px solid;}
+            #timeUl {position:relative;list-style-type: none; float: left;}
+            #properties {position: relative;font-size: 30px;top: 50px;margin: auto;width: 35px;height: 35px;z-index: 1;}
+        </style>
+    </head>
+    <body>
+		<div><input type="button" name="Submit" onclick="javascript:history.back(-1);" value="返回" style="position: relative; z-index: 1;"/></div><br />
+		<div id="radioRes" onchange="radioCheck()" style="left: 620px;position: relative;z-index: 1;">
+			<input class="radio" id="realTime" type="radio" name="pic">实时位置
+			<input class="radio" id="history" type="radio" name="pic">历史轨迹
+		</div>
+        <pre id='properties'></pre>
+        <div id='map'></div>
+        <div id='timeTrackList' style="display: none;">
+            <ul id="timeUl">
+                {% for time_info in device_track %}
+                <li onclick="chooseTime(this.innerText)">{{time_info.captured_time}}</li>
+                {% endfor %}
+            </ul>
+        </div>
+		<script type="text/javascript">
+			// 选择查看轨迹开始和结束时间
+			var startEnd_time = []
+			// 轨迹时间列表
+			var historyDiv = document.getElementById("timeTrackList")
+			var time_list = document.getElementById("timeUl").getElementsByTagName("li")
+			// 显示楼层
+			var properties = document.getElementById('properties');
+			timeIndex = []
+            // 用户可视化点大小
+            var size = 200;
+            var F1 = false
+			var F5 = false
+			
+			// 加载地图
+            mapboxgl.accessToken = 'pk.eyJ1IjoiZmVsYXJpZSIsImEiOiJjazJ4Z2wybG0wOWJxM21xcmJsNDZzcnp3In0.ZrLvRZJByBXfvWW8OPOq8w';
+	        var map = new mapboxgl.Map({
+	            container: 'map',
+	            style: 'mapbox://styles/mapbox/streets-v11', 
+	            center: [118.91105829179,32.11701001102], 
+	            zoom: 18
+			});
+			//判断是否选择自身
+			click_this = false
+	    	//选择轨迹开始和结束的时间
+	    	function chooseTime(timeText) {
+				// 取消选择
+	    		existEleIndex = startEnd_time.indexOf(timeText)
+	    		if (existEleIndex != -1) {
+					click_this = true
+	    			startEnd_time.splice(existEleIndex,1)
+	    			timeIndex.splice(existEleIndex,1)
+	    			for (var i=0; i<time_list.length; i++) {
+	    				if (time_list[i].innerHTML == timeText) {
+	    					time_list[i].style.color = 'black'
+	    				}
+				}
+			}
+			if (click_this == false) {
+				timeIndex = []
+				// 超出两个时间点
+	    		if (startEnd_time.length >= 2) {
+	    			startEnd_time.pop()
+	    		}
+	    		startEnd_time.push(timeText)
+				startEnd_time.sort()
+				// 选择时间并变色
+	    		for (var i=0; i<time_list.length; i++) {
+	    			if (startEnd_time.indexOf(time_list[i].innerHTML) != -1) {
+	    				time_list[i].style.color = 'red'
+	    				timeIndex.push(i)
+	    			}
+	    			else {
+	    				time_list[i].style.color = 'black'
+	    			}
+				}
+			}
+			showRoute()
+			click_this = false
+	    }
+
+
+		// 读取轨迹信息
+        historyInfos = {{device_track_json}}
+		historyInfo = []
+		existFloor = false
+	    for (var i=0;i<historyInfos.length; i++) {
+			historyInfo.push([historyInfos[i].longitude,historyInfos[i].latitude])
+		}
+
+	    //动态绘制轨迹信息
+	    function showRoute() {
+			// 轨迹端点初始化
+	    	historyPointGeojson.features[0].geometry.coordinates = []
+	    	map.getSource('linePoint').setData(historyPointGeojson)
+	    	map.setLayoutProperty("floorPlan", 'visibility', 'visible');
+			map.setLayoutProperty("linePoint", 'visibility', 'visible');
+			// 显示用户历史点信息
+	    	if (startEnd_time.length == 1) {
+				map.setLayoutProperty("line-animation", 'visibility', 'none');
+				// 读取楼层信息
+	    		if(historyInfos[timeIndex[0]].level_code == "100") {
+	    			properties.innerHTML = "F1"
+                    map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_100.png' %}"})
+				}
+				if(historyInfos[timeIndex[0]].level_code == "103") {
+	    			properties.innerHTML = "F5"
+                    map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_103.png' %}"})
+	    		}
+	    		if(historyInfos[timeIndex[0]].level_code == "104") {
+	    			properties.innerHTML = "F5"
+                    map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_104.png' %}"})
+	    		}
+			}
+			// 显示用户历史轨迹信息
+	    	if (startEnd_time.length == 2) {
+				// 设置开始和结束点
+	    		lineStartIndex = timeIndex[0]
+				lineEndIndex = timeIndex[1]
+				// 轨迹初始化
+	    		historyGeojson.features[0].geometry.coordinates = []
+	    		map.getSource('line-animation').setData(historyGeojson)
+				map.setLayoutProperty("line-animation", 'visibility', 'visible');
+				// 开始动画
+	    		var routeHis = setInterval (function() {
+            		if(lineStartIndex <= lineEndIndex){
+						// 写入轨迹信息
+						historyGeojson.features[0].geometry.coordinates.push(historyInfo[lineStartIndex]);
+						// 防止反复读取底图
+	    				if(historyInfos[lineStartIndex].level_code == "100" && F1 == false) {
+	    					properties.innerHTML = "F1"
+                            map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_100.png' %}"})
+                            F1 = true
+                            F5 = false
+	    				}
+	    				if(historyInfos[lineStartIndex].level_code == "104" && F5 == false) {
+	    					properties.innerHTML = "F5"
+                            map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_104.png' %}"})
+                            F5 = true
+                            F1 = false
+	    				}
+	    				map.getSource('line-animation').setData(historyGeojson);
+	    				lineStartIndex += 1;
+            		} 	else {
+            		    	clearInterval(routeHis);
+            			}
+            	}, 60);
+			}
+			// 绘制轨迹端点
+	    	for(var i=0; i<timeIndex.length; i++) {
+	    		historyPointGeojson.features[0].geometry.coordinates.push(historyInfo[timeIndex[i]])
+	    		map.getSource('linePoint').setData(historyPointGeojson)
+	    	}
+	    }
+
+		// 历史轨迹geojson
+         var historyGeojson = {
+	    	"type": "FeatureCollection",
+	    	"features": [{
+	    		"type": "Feature",
+	    		"geometry": {
+	    			"type": "LineString",
+	    			"coordinates": []
+	    		}
+	    	}]
+	    };
+
+		// 轨迹端点geojson
+	    var historyPointGeojson = {
+	    	"type": "FeatureCollection",
+	    	"features": [{
+	    		"type": "Feature",
+	    		"geometry": {
+	    			"type": "MultiPoint",
+	    			"coordinates": []
+	    		}
+	    	}]
+	    };
+
+		// 地图geojson 默认为一楼
+        var floorPlanLayer = {
+			    "id": "floorPlan",
+			    "type": "raster",
+			    "source": {
+			    	"type": "image",
+			    	"url": "{% static 'imgs/floorplan_100.png' %}",
+			    	"coordinates":[
+			    		[118.910553712999994,32.117351709800001],
+			    		[118.911630181000002,32.117351709800001],
+			    		[118.911630181000002,32.116736381200002],
+			    		[118.910553712999994,32.116736381200002]
+			    	]
+			    }
+            }
+
+        map.on('load', function () {
+            map.addLayer(floorPlanLayer)
+            // 实时点图层
+	    	map.addLayer({
+	    		"id": "userPoint",
+	    		"type": "circle",
+	    		"source": {
+	    			"type": "geojson",
+	    			"data": {
+	    				"type": "FeatureCollection",
+	    				"features": [{
+	    					"type": "Feature",
+	    					"geometry": {
+	    						"type": "Point",
+	    						"coordinates": [118.911285, 32.116892]
+	    					}
+	    				}]
+	    			}
+	    		},
+	    		"paint": {
+	    			"circle-color": "#FF0000",
+	    			"circle-radius": 6
+	    		}
+	    	});
+	    	// 历史轨迹图层
+	    	map.addLayer({
+	    		'id': 'line-animation',
+	    		'type': 'line',
+	    		'source': {
+	    			'type': 'geojson',
+	    			'data': historyGeojson
+	    		},
+	    		'layout': {
+	    			'line-cap': 'round',
+	    			'line-join': 'round'
+	    		},
+	    		'paint': {
+	    			'line-color': '#ed6498',
+	    			'line-width': 5,
+	    			'line-opacity': .8
+	    		}
+	    	});
+	    	//轨迹端点
+	    	map.addLayer({
+	    		"id": "linePoint",
+	    		"type": "circle",
+	    		"source": {
+	    			"type": "geojson",
+	    			"data": historyPointGeojson
+	    		},
+	    		"paint": {
+	    			"circle-color": "#3887be",
+	    			"circle-radius": 5
+	    		}
+	    	});
+
+			// 设置默认不显示
+	    	map.setLayoutProperty("userPoint", 'visibility', 'none');
+	    	map.setLayoutProperty("line-animation", 'visibility', 'none');
+	    	map.setLayoutProperty("floorPlan", 'visibility', 'none');
+		})
+		
+		// 实时位置和历史轨迹切换
+		function radioCheck() {
+			if (document.getElementById("realTime").checked) {
+				map.setLayoutProperty("userPoint", 'visibility', 'visible');
+				map.setLayoutProperty("line-animation", 'visibility', 'none');
+				map.setLayoutProperty("linePoint", 'visibility', 'none');
+				historyDiv.style.display = "none"
+				getUserRealTimePos()
+        	}
+        	if (document.getElementById("history").checked) {
+				map.setLayoutProperty("userPoint", 'visibility', 'none');
+				map.setLayoutProperty("line-animation", 'visibility', 'visible');
+				map.setLayoutProperty("linePoint", 'visibility', 'visible');
+				historyDiv.style.display = ""
+        	}
+		}
+
+		// 每隔两秒发送一次请求,获取实时位置
+		user_id = {{user_id}}
+		function getUserRealTimePos() { 
+			if(document.getElementById("realTime").checked) {
+				setTimeout(getUserRealTimePos, 1000 * 2 ); 
+			}
+	    	$.ajax({
+				url : "http://127.0.0.1:8000/apis/user_current",
+                method: 'POST',
+                data: {"userId":user_id},
+                dataType:'json',
+                success:function(data){
+					map.getSource('userPoint').setData({
+                        "type": "FeatureCollection",
+						"features": [{
+	    					"type": "Feature",
+	    					"geometry": {
+	    						"type": "Point",
+	    						"coordinates": [data["longitude"], data["latitude"]]
+	    					}
+	    				}]
+                    })
+                },
+                error:function(e){
+                    console.log("error")
+                }
+			});
+			console.log("run")
+		}	
+
+        </script>
+    </body>
+</html>
