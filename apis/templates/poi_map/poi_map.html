@@ -177,6 +177,21 @@
                         show_properties("beacons", e)
                     })
 
+                    //改变鼠标指针
+                    map.on('mouseenter', 'pois', function () {
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+                    map.on('mouseleave', 'pois', function () {
+                        map.getCanvas().style.cursor = '';
+                    });
+                    map.on('mouseenter', 'beacons', function () {
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+                    map.on('mouseleave', 'beacons', function () {
+                        map.getCanvas().style.cursor = '';
+                    });                    
+                    
+                    //楼层选择控制
                     var toggleableLayerIds = floors;
                     for (var i = 0; i < toggleableLayerIds.length; i++) {
 			        var id = toggleableLayerIds[i];
