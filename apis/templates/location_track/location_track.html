@@ -130,7 +130,7 @@
 		historyInfo = []
 		existFloor = false
 	    for (var i=0;i<historyInfos.length; i++) {
-			historyInfo.push([historyInfos[i].longitude,historyInfos[i].latitude])
+			historyInfo.push([historyInfos[i].longitude - 0.00003,historyInfos[i].latitude + 0.00008])
 		}
 
 	    //动态绘制轨迹信息
@@ -284,7 +284,7 @@
 	    		},
 	    		'paint': {
 	    			'line-color': '#ed6498',
-	    			'line-width': 5,
+	    			'line-width': 3,
 	    			'line-opacity': .8
 	    		}
 	    	});
