@@ -215,11 +215,22 @@ def location_track(request):
     device_userid = device.user_id
     device_coordinates = device.devicecoordinate_set.all()
     device_trackInfo = []
+    device_time = {}
+    device_alldate = []
     for device_coordinate in device_coordinates:
-        print(device_coordinate.latitude + ":" + device_coordinate.longitude)
+        # print(device_coordinate.latitude + ":" + device_coordinate.longitude)
         device_coordinate.latitude = float(device_coordinate.latitude) + 0
         device_coordinate.longitude = float(device_coordinate.longitude) + 0
+
         device_captured_time = str(device_coordinate.captured_time)[0:19]
+        device_date = str(device_coordinate.captured_time)[0:10]
+        if device_date not in device_alldate:
+            device_alldate.append(device_date)
+            device_time[device_date] = [device_captured_time]
+        else:
+            if device_captured_time not in device_time[device_date]:
+                device_time[device_date].append(device_captured_time)
+
         device_levelCode = device_coordinate.level_code
         device_trackInfo_List = {"longitude": device_coordinate.longitude, "latitude": device_coordinate.latitude, "level_code":device_levelCode,"captured_time":device_captured_time}
         device_trackInfo.append(device_trackInfo_List)
@@ -227,7 +238,8 @@ def location_track(request):
     context = {
         'device_track': device_trackInfo,
         'device_track_json': SafeString(device_trackInfo),
-        'user_id': str(device.user_id)
+        'user_id': str(device.user_id),
+        'device_time': SafeString(device_time)
     }
     return HttpResponse(template.render(context, request))
 

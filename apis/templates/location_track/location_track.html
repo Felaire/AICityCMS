@@ -22,21 +22,26 @@
 			<input class="radio" id="realTime" type="radio" name="pic">实时位置
 			<input class="radio" id="history" type="radio" name="pic">历史轨迹
 		</div>
+		<div id="timeDate" style="position: relative;z-index: 10; right: 600px;">
+			<select id="selectDate" style="display: none;">
+				<option selected="selected" value="""></option>
+			</select>
+		</div>
         <pre id='properties'></pre>
         <div id='map'></div>
         <div id='timeTrackList' style="display: none;">
             <ul id="timeUl">
-                {% for time_info in device_track %}
-                <li onclick="chooseTime(this.innerText)" style="cursor: pointer;">{{time_info.captured_time}}</li>
-                {% endfor %}
             </ul>
         </div>
 		<script type="text/javascript">
+			trackDate = {{device_time}}
 			// 选择查看轨迹开始和结束时间
 			var startEnd_time = []
 			// 轨迹时间列表
 			var historyDiv = document.getElementById("timeTrackList")
 			var time_list = document.getElementById("timeUl").getElementsByTagName("li")
+			var timeUl = document.getElementById('timeUl')
+			var selectDate = document.getElementById('selectDate')
 			// 显示楼层
 			var properties = document.getElementById('properties');
 			timeIndex = []
@@ -44,6 +49,28 @@
             var size = 200;
             var F1 = false
 			var F5 = false
+			// 添加日期信息
+			for (var i=0; i<Object.keys(trackDate).length; i++) {
+				dateOption = document.createElement("option")
+				dateOption.innerHTML = Object.keys(trackDate)[i]
+				dateOption.value = Object.keys(trackDate)[i]
+				dateOption.onclick = getDate
+				selectDate.appendChild(dateOption)
+			}
+			// 添加具体时间
+			dateChange = false
+			function getDate(e) {
+				timeUl.innerHTML = null
+				dateChange = true
+				showTime = trackDate[e.target.innerHTML]
+				for(var i=0; i<showTime.length; i++) {
+					timeLi = document.createElement('li')
+					timeLi.innerHTML = showTime[i]
+					timeLi.onclick = chooseTime
+					timeLi.style.cursor = "pointer"
+					timeUl.appendChild(timeLi)
+				}
+			}
 			
 			// 加载地图
             mapboxgl.accessToken = 'pk.eyJ1IjoiZmVsYXJpZSIsImEiOiJjazJ4Z2wybG0wOWJxM21xcmJsNDZzcnp3In0.ZrLvRZJByBXfvWW8OPOq8w';
@@ -56,7 +83,12 @@
 			//判断是否选择自身
 			click_this = false
 	    	//选择轨迹开始和结束的时间
-	    	function chooseTime(timeText) {
+	    	function chooseTime(e) {
+				timeText = e.target.innerHTML
+				if (dateChange == true) {
+					startEnd_time = []
+					dateChange = false
+				}
 				// 取消选择
 	    		existEleIndex = startEnd_time.indexOf(timeText)
 	    		if (existEleIndex != -1) {
@@ -67,30 +99,30 @@
 	    				if (time_list[i].innerHTML == timeText) {
 	    					time_list[i].style.color = 'black'
 	    				}
+					}
 				}
-			}
-			if (click_this == false) {
-				timeIndex = []
-				// 超出两个时间点
-	    		if (startEnd_time.length >= 2) {
-	    			startEnd_time.pop()
-	    		}
-	    		startEnd_time.push(timeText)
-				startEnd_time.sort()
-				// 选择时间并变色
-	    		for (var i=0; i<time_list.length; i++) {
-	    			if (startEnd_time.indexOf(time_list[i].innerHTML) != -1) {
-	    				time_list[i].style.color = 'red'
-	    				timeIndex.push(i)
+				if (click_this == false) {
+					timeIndex = []
+					// 超出两个时间点
+	    			if (startEnd_time.length >= 2) {
+	    				startEnd_time.pop()
 	    			}
-	    			else {
-	    				time_list[i].style.color = 'black'
-	    			}
+	    			startEnd_time.push(timeText)
+					startEnd_time.sort()
+					// 选择时间并变色
+	    			for (var i=0; i<time_list.length; i++) {
+	    				if (startEnd_time.indexOf(time_list[i].innerHTML) != -1) {
+	    					time_list[i].style.color = 'red'
+	    					timeIndex.push(i)
+	    				}
+	    				else {
+	    					time_list[i].style.color = 'black'
+	    				}
+					}
 				}
-			}
-			showRoute()
-			click_this = false
-	    }
+				showRoute()
+				click_this = false
+	    	}	
 
 
 		// 读取轨迹信息
@@ -110,6 +142,10 @@
 			map.setLayoutProperty("linePoint", 'visibility', 'visible');
 			// 显示用户历史点信息
 	    	if (startEnd_time.length == 1) {
+				map.flyTo({
+					center:historyInfo[timeIndex[0]],
+					curve: 1.42,
+				})		
 				map.setLayoutProperty("line-animation", 'visibility', 'none');
 				// 读取楼层信息
 	    		if(historyInfos[timeIndex[0]].level_code == "100") {
@@ -130,6 +166,10 @@
 				// 设置开始和结束点
 	    		lineStartIndex = timeIndex[0]
 				lineEndIndex = timeIndex[1]
+				map.flyTo({
+					center:historyInfo[lineEndIndex],
+					curve: 1.42,
+				})					
 				// 轨迹初始化
 	    		historyGeojson.features[0].geometry.coordinates = []
 	    		map.getSource('line-animation').setData(historyGeojson)
@@ -275,6 +315,7 @@
 				map.setLayoutProperty("line-animation", 'visibility', 'none');
 				map.setLayoutProperty("linePoint", 'visibility', 'none');
 				historyDiv.style.display = "none"
+				selectDate.style.display = "none"
 				getUserRealTimePos()
         	}
         	if (document.getElementById("history").checked) {
@@ -282,6 +323,7 @@
 				map.setLayoutProperty("line-animation", 'visibility', 'visible');
 				map.setLayoutProperty("linePoint", 'visibility', 'visible');
 				historyDiv.style.display = ""
+				selectDate.style.display = ""
         	}
 		}
 
