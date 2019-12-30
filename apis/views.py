@@ -219,9 +219,10 @@ def location_track(request):
     device_alldate = []
     for device_coordinate in device_coordinates:
         # print(device_coordinate.latitude + ":" + device_coordinate.longitude)
+        if device_coordinate.latitude == "nan" or device_coordinate.longitude == "nan":
+            continue;    
         device_coordinate.latitude = float(device_coordinate.latitude) + 0
         device_coordinate.longitude = float(device_coordinate.longitude) + 0
-
         device_captured_time = str(device_coordinate.captured_time)[0:19]
         device_date = str(device_coordinate.captured_time)[0:10]
         if device_date not in device_alldate:

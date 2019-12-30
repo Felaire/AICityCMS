@@ -90,18 +90,18 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
 DATABASES = {
-        # 'default': {
-        #     'ENGINE': 'django.db.backends.mysql',
-        #     'NAME': 'hku',
-        #     'USER': 'root',
-        #     'PASSWORD': '3e4r5T6Y',
-        #     'HOST': '172.16.182.77',
-        #     'PORT': '3306'
-        # }
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'nnudata.sqlite3'),
-    }        
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'hku',
+            'USER': 'root',
+            'PASSWORD': 'ch857nab',
+            'HOST': '127.0.0.1',
+            'PORT': '3306'
+        }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': os.path.join(BASE_DIR, 'nnudata.sqlite3'),
+    # }        
 }
 
 
