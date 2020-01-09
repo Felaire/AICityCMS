@@ -18,13 +18,13 @@
         <div><input type="button" name="Submit" onclick="javascript:history.back(-1);" value="返回" /></div><br />
         <div id='layers' onclick="layerControl()">
             <div><input class='radio_type' id='base_map' type='checkbox' value='floor_plan' checked='checked'>
-            <label for='base_map'>BaseMap</label></div>
+            <label class="layerLabel" for='base_map'>BaseMap</label></div>
     
             <div><input class='radio_type'  id='beacon' type='checkbox' value='beacon'>
-            <label for='beacon'>iBeacon</label></div>
+            <label class="layerLabel" for='beacon'>iBeacon</label></div>
     
             <div><input class='radio_type'  id='pois' type='checkbox' value='pois'>
-            <label for='pois'>POI</label></div>
+            <label class="layerLabel" for='pois'>POI</label></div>
         </div>
         <div id='map'></div>
         <nav id="menu"></nav>
@@ -68,7 +68,7 @@
                         "type": "Point",
                         "coordinates": [{{poi.longitude}}, {{poi.latitude}}]
                 }
-                this_feature["properties"] = {"id": "{{poi.id}}", "name": "{{poi.name}}"}
+                this_feature["properties"] = {"id": "{{poi.id}}", "name": "{{poi.title}}"}
                 pois_feature.push(this_feature)
             {% endfor %}
 

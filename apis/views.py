@@ -14,6 +14,7 @@ from django.conf import settings
 from django.template import loader
 from kafka import KafkaProducer
 from django.utils.safestring import SafeString
+from itertools import groupby
 
 
 # Create your views here.
@@ -217,6 +218,8 @@ def location_track(request):
     device_trackInfo = []
     device_time = {}
     device_alldate = []
+    repeated_coordinates = []
+    repeat_time = 0
     for device_coordinate in device_coordinates:
         # print(device_coordinate.latitude + ":" + device_coordinate.longitude)
         if device_coordinate.latitude == "nan" or device_coordinate.longitude == "nan":
@@ -231,11 +234,12 @@ def location_track(request):
         else:
             if device_captured_time not in device_time[device_date]:
                 device_time[device_date].append(device_captured_time)
-
         device_levelCode = device_coordinate.level_code
-        device_trackInfo_List = {"longitude": device_coordinate.longitude, "latitude": device_coordinate.latitude, "level_code":device_levelCode,"captured_time":device_captured_time}
+        device_trackInfo_List = {"longitude": device_coordinate.longitude, "latitude": device_coordinate.latitude, "level_code":device_levelCode}
         device_trackInfo.append(device_trackInfo_List)
     template = loader.get_template('location_track/location_track.html')
+    # 去除连续重复数据
+    device_trackInfo = [x[0] for x in groupby(device_trackInfo)]
     context = {
         'device_track': device_trackInfo,
         'device_track_json': SafeString(device_trackInfo),
