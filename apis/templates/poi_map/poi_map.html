@@ -45,11 +45,13 @@
             </div>          
         </div>
         <div id='map'></div>
-        <pre id='properties' class='properties'></pre>
+        <pre id='properties' class='properties' onclick="cancelProperties()"></pre>
         <script>
             //楼层
             var layerList = document.getElementById('layers');
             var choose_layer = layerList.getElementsByTagName('input');
+            var properties = document.getElementById('properties')
+            var floorsDiv = []
             // 创建地图
         	mapboxgl.accessToken = 'pk.eyJ1IjoiZmVsYXJpZSIsImEiOiJjazJ4Z2wybG0wOWJxM21xcmJsNDZzcnp3In0.ZrLvRZJByBXfvWW8OPOq8w';
 	        var map = new mapboxgl.Map({
@@ -268,7 +270,15 @@
 			        link.textContent = id;
 			        link.onclick = function (e) {
                         for (var i=0; i<floors.length; i++) {
-                            if(this.textContent == floors[i]) {                                
+                            if(this.textContent == floors[i]) {                    
+                                for (var j=0; j<floorsDiv.length; j++) {
+                                    if (floorsDiv[j].textContent == floors[i]) {
+                                        floorsDiv[j].className = 'floorActive'
+                                    }
+                                    else {
+                                        floorsDiv[j].className = 'floorName'
+                                    }
+                                }                                          
                                 if (choose_layer[0].checked == true) {
                                     map.setLayoutProperty("floorPlan", 'visibility', 'visible');
                                     this_floorPlan = null
@@ -326,7 +336,7 @@
 			        };
 			        var layers = document.getElementById('nav');
                     layers.appendChild(link);
-                    var floorDiv = document.getElementsByClassName('floorName')
+                    floorsDiv.push(link)
                     }
                 })
             })
@@ -386,6 +396,10 @@
                         console.log("error")
                     }
                 });
+            }
+
+            function cancelProperties() {
+                properties.style.display = "none"
             }
             
             // 图片加载

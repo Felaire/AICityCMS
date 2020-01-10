@@ -7,32 +7,38 @@
         <title>User Heatmap</title>
         <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.js'></script>
         <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css' rel='stylesheet' />
-        <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+		<script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+		<link rel="stylesheet" type="text/css" href="{% static 'css/track.css' %}"/>
         <style>
-            body { margin:0; padding:0; text-align: center;}
-            #map { position:absolute; top:0; bottom:0; width:100%; z-index: 0;}
-            #timeTrackList {position: relative;float:right; right:20px;width:250px; display:block; overflow-y: scroll; ;height:500px;background-color: rgba(255,255,255,0.3);border: 1px solid;}
+            body {margin:0; padding:0; text-align: center;}
+            #map { position:absolute; top:0; bottom:0; width:85%; z-index: -1; float: left;}
+            #timeTrackList {position: relative;float:right; display:block; overflow-y: scroll;width: 100%; height:500px; background-color: rgba(255,255,255,0.3);border: 1px solid;}
             #timeUl {position:relative;list-style-type: none; float: left;}
-            #properties {position: relative;font-size: 30px;top: 50px;margin: auto;width: 35px;height: 35px;z-index: 1;}
+			#properties {position: relative;font-size: 18px;text-align: center; z-index: 1;}
+			#right {position: relative; width: 15%; float:right;}
         </style>
     </head>
     <body>
-		<div><input type="button" name="Submit" onclick="javascript:history.back(-1);" value="返回" style="position: relative; z-index: 1;"/></div><br />
-		<div id="radioRes" onchange="radioCheck()" style="left: 620px;position: relative;z-index: 1;">
-			<input class="radio" id="realTime" type="radio" name="pic">实时位置
-			<input class="radio" id="history" type="radio" name="pic">历史轨迹
-		</div>
-		<div id="timeDate" style="position: relative;z-index: 10; right: 600px;">
-			<select id="selectDate" style="display: none;">
-				<option selected="selected" value=""></option>
-			</select>
-		</div>
-        <pre id='properties'></pre>
-        <div id='map'></div>
-        <div id='timeTrackList' style="display: none;">
-            <ul id="timeUl">
-            </ul>
-        </div>
+		<div><input type="button" name="Submit" onclick="javascript:history.back(-1);" value="返回" style="position: fixed; z-index: 1;"/></div><br />
+		<div id='map'></div>	
+		<div id='right'>
+			<div id="timeDate" style="position: fixed;z-index: 10;display: none; right: 35px;">
+				选择日期: <select id="selectDate">
+					<option selected="selected" value=""></option>
+				</select>
+			</div><br><br>		
+			<div id="floors" style="display: none;position: relative;"><pre id='properties'></pre></div>
+			<div id="radioRes" onchange="radioCheck()" style="position: relative;z-index: 1;margin-top: 0;">
+				<hr>
+				<input class="radio" id="realTime" type="radio" name="pic">实时位置
+				<input class="radio" id="history" type="radio" name="pic">历史轨迹
+				<hr>
+			</div><br>
+			<div id='timeTrackList' style="display: none;">
+				<ul id="timeUl">
+				</ul>
+			</div>			
+		</div>	
 		<script type="text/javascript">
 			trackDate = {{device_time}}
 			// 选择查看轨迹开始和结束时间
@@ -42,12 +48,15 @@
 			var time_list = document.getElementById("timeUl").getElementsByTagName("li")
 			var timeUl = document.getElementById('timeUl')
 			var selectDate = document.getElementById('selectDate')
+			var timeDate = document.getElementById('timeDate')
 			// 显示楼层
 			var properties = document.getElementById('properties');
+			var floors = document.getElementById('floors')
 			timeIndex = []
             // 用户可视化点大小
             var size = 200;
             var F1 = false
+			var F4 = false
 			var F5 = false
 			// 添加日期信息
 			for (var i=0; i<Object.keys(trackDate).length; i++) {
@@ -135,6 +144,7 @@
 
 	    //动态绘制轨迹信息
 	    function showRoute() {
+			floors.style.display = ""
 			// 轨迹端点初始化
 	    	historyPointGeojson.features[0].geometry.coordinates = []
 	    	map.getSource('linePoint').setData(historyPointGeojson)
@@ -148,16 +158,19 @@
 				})		
 				map.setLayoutProperty("line-animation", 'visibility', 'none');
 				// 读取楼层信息
+	    		if(historyInfos[timeIndex[0]].level_code == "099") {
+	    			properties.innerHTML = "停车场"
+				}				
 	    		if(historyInfos[timeIndex[0]].level_code == "100") {
-	    			properties.innerHTML = "F1"
+	    			properties.innerHTML = "楼层:F1"
                     map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_100.png' %}"})
 				}
 				if(historyInfos[timeIndex[0]].level_code == "103") {
-	    			properties.innerHTML = "F4"
+	    			properties.innerHTML = "楼层:F4"
                     map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_103.png' %}"})
 	    		}
 	    		if(historyInfos[timeIndex[0]].level_code == "104") {
-	    			properties.innerHTML = "F5"
+	    			properties.innerHTML = "楼层:F5"
                     map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_104.png' %}"})
 	    		}
 			}
@@ -180,17 +193,36 @@
 						// 写入轨迹信息
 						historyGeojson.features[0].geometry.coordinates.push(historyInfo[lineStartIndex]);
 						// 防止反复读取底图
-	    				if(historyInfos[lineStartIndex].level_code == "100" && F1 == false) {
-	    					properties.innerHTML = "F1"
-                            map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_100.png' %}"})
-                            F1 = true
+	    				if(historyInfos[lineStartIndex].level_code == "099" && F0 == false) {
+	    					properties.innerHTML = "停车场"
+							F0 == true
+                            F1 = false
+							F4 = false
                             F5 = false
 	    				}
-	    				if(historyInfos[lineStartIndex].level_code == "104" && F5 == false) {
-	    					properties.innerHTML = "F5"
-                            map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_104.png' %}"})
-                            F5 = true
+	    				if(historyInfos[lineStartIndex].level_code == "100" && F1 == false) {
+	    					properties.innerHTML = "楼层:F1"
+                            map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_100.png' %}"})
+                            F0 == false
+							F1 = true
+							F4 = false
+                            F5 = false
+	    				}
+						if(historyInfos[lineStartIndex].level_code == "103" && F4 == false) {
+	    					properties.innerHTML = "楼层:F4"
+                    		map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_103.png' %}"})
+							F0 == false
                             F1 = false
+							F4 = true
+							F5 = false							
+	    				}						
+	    				if(historyInfos[lineStartIndex].level_code == "104" && F5 == false) {
+	    					properties.innerHTML = "楼层:F5"
+                            map.getSource("floorPlan").updateImage({"url":"{% static 'imgs/floorplan_104.png' %}"})        
+							F0 == false                    
+                            F1 = false
+							F4 = false
+							F5 = true
 	    				}
 	    				map.getSource('line-animation').setData(historyGeojson);
 	    				lineStartIndex += 1;
@@ -315,7 +347,7 @@
 				map.setLayoutProperty("line-animation", 'visibility', 'none');
 				map.setLayoutProperty("linePoint", 'visibility', 'none');
 				historyDiv.style.display = "none"
-				selectDate.style.display = "none"
+				timeDate.style.display = "none"
 				getUserRealTimePos()
         	}
         	if (document.getElementById("history").checked) {
@@ -323,15 +355,20 @@
 				map.setLayoutProperty("line-animation", 'visibility', 'visible');
 				map.setLayoutProperty("linePoint", 'visibility', 'visible');
 				historyDiv.style.display = ""
-				selectDate.style.display = ""
+				timeDate.style.display = ""
         	}
 		}
 
 		// 每隔两秒发送一次请求,获取实时位置
 		user_id = {{user_id}}
+		var currentUser
 		function getUserRealTimePos() { 
 			if(document.getElementById("realTime").checked) {
 				setTimeout(getUserRealTimePos, 1000 * 2 ); 
+				map.flyTo({
+						center:currentUser,
+						curve: 1.42,
+				})	
 			}
 	    	$.ajax({
 				url : "http://127.0.0.1:8000/apis/user_current",
@@ -349,6 +386,7 @@
 	    					}
 	    				}]
                     })
+					currentUser = [data["longitude"], data["latitude"]]
                 },
                 error:function(e){
                     console.log("error")

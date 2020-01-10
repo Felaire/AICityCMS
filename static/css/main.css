@@ -75,31 +75,37 @@
 }
 /* label与check是绑定的，点击label会被checked，设置被选中时check选框背景 */
 .radio_type:checked+.layerLabel:after{
-	background-color: #6099da;
+	background-color: #aed4ff;
 }
 /* 被选中时label背景 */
 .radio_type:checked+.layerLabel{
-	background:-webkit-linear-gradient(left top,#fbfcfd,#6099da);
+	background:-webkit-linear-gradient(left top,#fbfcfd,#aed4ff);
 }
 
 #nav {
     font-size: 16px;
 }
 
-#nav a {
+.floorName {
     color: black;
     display: block;
     width: 100%;
     text-align: center;
     text-decoration: none;
     padding: 14px 0px;
-    background-color: white;
+    background-color: rgb(239, 243, 251);
 }
 
 .floorActive {
+    color: black;
+    display: block;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    padding: 14px 0px;
     background-color: #6099da;
 }
 
-#nav a:hover {
+.floorName:hover {
     background-color: #6099da;
 }
