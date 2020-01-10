@@ -55,6 +55,7 @@
 			timeIndex = []
             // 用户可视化点大小
             var size = 200;
+			var F0 = false
             var F1 = false
 			var F4 = false
 			var F5 = false
@@ -343,6 +344,7 @@
 		// 实时位置和历史轨迹切换
 		function radioCheck() {
 			if (document.getElementById("realTime").checked) {
+				historyGeojson.features[0].geometry.coordinates = []
 				map.setLayoutProperty("userPoint", 'visibility', 'visible');
 				map.setLayoutProperty("line-animation", 'visibility', 'none');
 				map.setLayoutProperty("linePoint", 'visibility', 'none');

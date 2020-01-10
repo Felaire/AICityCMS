@@ -346,25 +346,82 @@
 		        if (choose_layer[0].checked == false) {
                     map.setLayoutProperty("floorPlan", 'visibility', 'none');
 		        } else {
-                    map.setLayoutProperty("floorPlan", 'visibility', 'visible');
+                    for (var i=0;i<floorsDiv.length;i++) {
+                        if (floorsDiv[i].className == 'floorActive') {
+                            for (var j=0;j<floors.length;j++) {
+                                if (floorsDiv[i].textContent == floors[j]) {
+                                    if (floors[j] == "100") {this_floorPlan = {"url":floorPlan_url[0]}}
+                                    if (floors[j] == "103") {this_floorPlan = {"url":floorPlan_url[1]}}
+                                    if (floors[j] == "104") {this_floorPlan = {"url":floorPlan_url[2]}}
+                                    map.getSource("floorPlan").updateImage(this_floorPlan)
+                                    map.setLayoutProperty("floorPlan", 'visibility', 'visible');
+                                    break
+                                }
+                            }                           
+                        }
+                    }
                 }
 		        if (choose_layer[1].checked == false) {
                     map.setLayoutProperty("beacons", 'visibility', 'none');
 		        }
                 else {
-                    map.setLayoutProperty("beacons", 'visibility', 'visible');
+                    for (var i=0;i<floorsDiv.length;i++) {
+                        if (floorsDiv[i].className == 'floorActive') {
+                            for (var j=0;j<floors.length;j++) {
+                                if (floorsDiv[i].textContent == floors[j]) {
+                                    map.getSource('beacons').setData({
+                                            "type": "FeatureCollection",
+                                            "features": beacons_featureList[floors[j]]
+                                    })
+                                    map.setLayoutProperty("beacons", 'visibility', 'visible');
+                                    break              
+                                }
+                            }                            
+                        }
+                    }                    
                 }
 		        if (choose_layer[2].checked == false) {
                     map.setLayoutProperty("pois", 'visibility', 'none');
 		        }
                 else {
-                    map.setLayoutProperty("pois", 'visibility', 'visible');
+                    for (var i=0;i<floorsDiv.length;i++) {
+                        if (floorsDiv[i].className == 'floorActive') {
+                            for (var j=0;j<floors.length;j++) {
+                                if (floorsDiv[i].textContent == floors[j]) {
+                                    console.log(floors[j])
+                                    map.getSource('pois').setData({
+                                            "type": "FeatureCollection",
+                                            "features": pois_featureList[floors[j]]
+                                    })  
+                                    map.setLayoutProperty("pois", 'visibility', 'visible');
+                                    break              
+                                }
+                            }                            
+                        }
+                    }                           
                 }
 		        if (choose_layer[3].checked == false) {
                     map.setLayoutProperty("roads", 'visibility', 'none');
 		        }
                 else {
-                    map.setLayoutProperty("roads", 'visibility', 'visible');
+                    for (var i=0;i<floorsDiv.length;i++) {
+                        if (floorsDiv[i].className == 'floorActive') {
+                            for (var j=0;j<floors.length;j++) {
+                                if (floorsDiv[i].textContent == floors[j]) {
+                                    map.getSource('roads').setData({
+                                            "type": "Feature",
+	                                        "properties": {},
+	                                        "geometry": {
+	                                            "type": "MultiLineString",
+                                                "coordinates":nodes[floors[j]],
+		                                    }
+                                        })      
+                                    map.setLayoutProperty("roads", 'visibility', 'visible');
+                                    break              
+                                }
+                            }                            
+                        }
+                    }                       
                 }                
 	        }
 
