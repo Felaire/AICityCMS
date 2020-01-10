@@ -257,10 +257,36 @@ def user_current(request):
 def poi_map(request):
     pois = Poi.objects.all();
     beacons = Beacon.objects.all();
+    nodes = Node.objects.filter(id__contains = "NNU")
+    edges = Edge.objects.filter(id__contains = "NNU")
+    resNodes = {}
+    resFloors = []
+    roadRes = {}
+    existedRoad = 0
     template = loader.get_template('poi_map/poi_map.html')
+    for node in nodes:
+        if node.level not in resFloors:
+            resFloors.append(node.level)
+            resNodes[node.level] = []
+        resNodes[node.level].append([node.id, node.lon, node.lat]) 
+    for floor in resFloors:
+        roadRes[floor] = []
+    for floor in resNodes:
+        for edge in edges:
+            for value in resNodes[floor]:
+                if value[0] == edge.from_node:
+                    fromCoordinates = [value[1],value[2]]
+                    existedRoad += 1
+                if value[0] == edge.to_node:
+                    toCoordinates = [value[1],value[2]]
+                    existedRoad += 1
+            if existedRoad == 2:
+                roadRes[floor].append([fromCoordinates,toCoordinates])
+                existedRoad = 0
     context = {
         'pois': pois,
-        'beacons': beacons
+        'beacons': beacons,
+        "nodes":SafeString(roadRes)
     }
     return HttpResponse(template.render(context, request))
 

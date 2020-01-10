@@ -1,45 +1,3 @@
-#menu {
-    background: #fff;
-    position: absolute;
-    z-index: 1;
-    top: 550px;
-    right: 80px;
-    border-radius: 3px;
-    width: 60px;
-    border: 1px solid rgba(0,0,0,0.4);
-    font-family: 'Open Sans', sans-serif;
-}
- 
-#menu a {
-    font-size: 13px;
-    color: #404040;
-    display: block;
-    margin: 0;
-    padding: 0;
-    padding: 10px;
-    text-decoration: none;
-    border-bottom: 1px solid rgba(0,0,0,0.25);
-    text-align: center;
-}
- 
-#menu a:last-child {
-    border: none;
-}
- 
-#menu a:hover {
-    background-color: #f8f8f8;
-    color: #404040;
-}
- 
-#menu a.active {
-    background-color: #3887be;
-    color: #ffffff;
-}
- 
-#menu a.active:hover {
-    background: #3074a4;
-}
-
 #info {
     display: block;
     position: relative;
@@ -82,24 +40,16 @@
 
 /* 最外层div */
 .layers {
-	width: 800px;
-	height: 800px;
-	max-height: 400px;
-	max-width: 400px;
-	left: 50%;
-	position: absolute;
-	margin-left: -200px;
-	top: 50%;
-	margin-top: -200px;
+    position: relative;
+    float: right;
 }
 /* 隐藏原来的表单 */
-input {
+.radio_type {
 	display: none;
 }
 /* 将label设置为块级元素 */
-label {
-	width: 30%;
-	height: 50px;
+.layerLabel {
+	width: 100%;
 	display: inline-block;
 	line-height: 50px;
 	position: relative;
@@ -108,11 +58,11 @@ label {
 	font-size: 16px;
 	font-family: '微软雅黑';
 }
-label:active {
+.layerLabel:active {
 	background: #EEEEEE;
 }
 /* 在label前或后添加一个空白字符,设置宽高,设置圆角使之成为圆形 */
-label:after {
+.layerLabel:after {
 	content: "";
 	width: 20px;
 	height: 20px;
@@ -124,10 +74,32 @@ label:after {
 	left: 15px;
 }
 /* label与check是绑定的，点击label会被checked，设置被选中时check选框背景 */
-input:checked+label:after{
+.radio_type:checked+.layerLabel:after{
 	background-color: #6099da;
 }
 /* 被选中时label背景 */
-input:checked+label{
+.radio_type:checked+.layerLabel{
 	background:-webkit-linear-gradient(left top,#fbfcfd,#6099da);
+}
+
+#nav {
+    font-size: 16px;
+}
+
+#nav a {
+    color: black;
+    display: block;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    padding: 14px 0px;
+    background-color: white;
+}
+
+.floorActive {
+    background-color: #6099da;
+}
+
+#nav a:hover {
+    background-color: #6099da;
 }

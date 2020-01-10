@@ -11,23 +11,40 @@
         <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}"/>
         <style>
             body { margin:0; padding:0; text-align: center;}
-            #map { position:absolute; top:0; bottom:0; width:100%; z-index: -1;}
+            #map { position:absolute; top:0; bottom:0; width:90%; z-index: -1; float: left;}
+            #elements {position: relative; width: 10%; bottom: 0px; float: right;}
         </style>
     </head>
     <body>
-        <div><input type="button" name="Submit" onclick="javascript:history.back(-1);" value="返回" /></div><br />
-        <div id='layers' onclick="layerControl()">
-            <div><input class='radio_type' id='base_map' type='checkbox' value='floor_plan' checked='checked'>
-            <label class="layerLabel" for='base_map'>BaseMap</label></div>
-    
-            <div><input class='radio_type'  id='beacon' type='checkbox' value='beacon'>
-            <label class="layerLabel" for='beacon'>iBeacon</label></div>
-    
-            <div><input class='radio_type'  id='pois' type='checkbox' value='pois'>
-            <label class="layerLabel" for='pois'>POI</label></div>
+        <div><input type="button" name="Submit" style="z-index: 5; position: fixed;" onclick="javascript:history.back(-1);" value="返回" /></div><br />
+        <div id="elements">
+            <hr><div>可视化要素</div><hr><br>
+            <div id='layers' onclick="layerControl()">
+                <div>
+                    <input class='radio_type' id='base_map' type='checkbox' value='floor_plan' checked='checked'>
+                    <label class="layerLabel" for='base_map'>BaseMap</label>
+                </div>
+            
+                <div>
+                    <input class='radio_type'  id='beacon' type='checkbox' value='beacon'>
+                    <label class="layerLabel" for='beacon'>iBeacon</label>
+                </div>
+            
+                <div>
+                    <input class='radio_type'  id='pois' type='checkbox' value='pois'>
+                    <label class="layerLabel" for='pois'>POI</label>
+                </div>
+
+                <div>
+                    <input class='radio_type'  id='road' type='checkbox' value='road'>
+                    <label class="layerLabel" for='road'>RoadNet</label>
+                </div>            
+            </div>
+            <br><br><br><hr><div>楼层</div><hr><br>
+            <div id="nav">   
+            </div>          
         </div>
         <div id='map'></div>
-        <nav id="menu"></nav>
         <pre id='properties' class='properties'></pre>
         <script>
             //楼层
@@ -104,9 +121,41 @@
                 this_feature["properties"] = {"id": "{{beacon.id}}", "type": "{{beacon.beacon_type}}"}
                 beacons_feature.push(this_feature)
             {% endfor %}
-
+            
+            // 路网
+            nodes = {{nodes}}
+            roads099 = nodes['099']
+            roads100 = nodes['100']
+            roads103 = nodes['103']
+            roads104 = nodes['104']
+            // 底图
             floorPlan_url = ["{% static 'imgs/floorplan_100.png' %}","{% static 'imgs/floorplan_103.png' %}","{% static 'imgs/floorplan_104.png' %}"]
             floors = floors.sort()
+
+            // 路网图层 默认显示一楼
+            var road_layer = {
+                "id": "roads",
+                "type": "line",
+                "source": {
+                    "type": "geojson",
+	                "data": {
+	                    "type": "Feature",
+	                    "properties": {},
+	                    "geometry": {
+	                        "type": "MultiLineString",
+                            "coordinates":roads100,
+		                }
+		            }
+                },
+                "layout": {
+		            "line-join": "round",
+		            "line-cap": "round",
+		        },
+		        "paint": {
+		            "line-color": "#888",
+		            "line-width": 3,
+		        }
+            }            
 
             // poi图层 默认显示一楼
             var poi_layer = {
@@ -180,10 +229,12 @@
                     map.addLayer(poi_layer)
                     map.addLayer(beacon_layer)
                     map.addLayer(floorPlan_layer)
+                    map.addLayer(road_layer)
                     //默认不显示
                     map.setLayoutProperty("pois", 'visibility', 'none');
                     map.setLayoutProperty("beacons", 'visibility', 'none');
                     map.setLayoutProperty("floorPlan", 'visibility', 'none');
+                    map.setLayoutProperty("roads", 'visibility', 'none');
 
                     //图层点击事件
                     map.on('click', "pois", function (e) {
@@ -213,7 +264,7 @@
 			        var id = toggleableLayerIds[i];
 			        var link = document.createElement('a');
 			        link.href = '#';
-			        link.className = 'active';
+			        link.className = 'floorName';
 			        link.textContent = id;
 			        link.onclick = function (e) {
                         for (var i=0; i<floors.length; i++) {
@@ -253,13 +304,29 @@
                                         map.setLayoutProperty("pois", 'visibility', 'none');
                                     }                       
                                 }
+                                if (choose_layer[3].checked == true) {
+                                    map.setLayoutProperty("roads", 'visibility', 'visible');
+                                    if (nodes[floors[i]]) {
+                                        map.getSource('roads').setData({
+                                            "type": "Feature",
+	                                        "properties": {},
+	                                        "geometry": {
+	                                            "type": "MultiLineString",
+                                                "coordinates":nodes[floors[i]],
+		                                    }
+                                        })     
+                                    }  else {
+                                        map.setLayoutProperty("roads", 'visibility', 'none');
+                                    }                       
+                                }                                
                             }
                         }
-			        	e.preventDefault();
-			        	e.stopPropagation();
+			        	// e.preventDefault();
+			        	// e.stopPropagation();
 			        };
-			        var layers = document.getElementById('menu');
-			        layers.appendChild(link);
+			        var layers = document.getElementById('nav');
+                    layers.appendChild(link);
+                    var floorDiv = document.getElementsByClassName('floorName')
                     }
                 })
             })
@@ -283,6 +350,12 @@
                 else {
                     map.setLayoutProperty("pois", 'visibility', 'visible');
                 }
+		        if (choose_layer[3].checked == false) {
+                    map.setLayoutProperty("roads", 'visibility', 'none');
+		        }
+                else {
+                    map.setLayoutProperty("roads", 'visibility', 'visible');
+                }                
 	        }
 
             // 详细属性信息显示
